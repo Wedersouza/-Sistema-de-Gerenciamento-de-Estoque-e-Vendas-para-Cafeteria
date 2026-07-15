@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .dash-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+  .dash-greeting { font-family: var(--font-heading); font-size: 30px; font-weight: 700; color: var(--color-text); }
+  .dash-date { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+  .dash-store-badge { background: var(--color-card-bg); border: 1px solid var(--color-border-strong); border-radius: 10px; padding: 10px 16px; font-size: 13px; color: var(--color-text-secondary); }
+  .dash-store-badge strong { color: var(--color-text); }
+
+  .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+  .dash-stat-card { background: var(--color-card-bg); border: 1px solid var(--color-border); border-radius: 14px; padding: 22px; box-shadow: 0 1px 2px rgba(43,27,18,0.04); }
+  .dash-stat-label { font-size: 13px; color: var(--color-text-secondary); font-weight: 600; margin-bottom: 10px; }
+  .dash-stat-value { font-family: var(--font-heading); font-size: 28px; font-weight: 700; }
+  .dash-stat-sub { font-size: 12.5px; margin-top: 6px; }
+
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start; }
+  .dash-card-title { font-size: 15px; font-weight: 700; color: var(--color-text); margin-bottom: 20px; }
+
+  .dash-bars { display: flex; align-items: flex-end; gap: 14px; height: 140px; margin-bottom: 10px; }
+  .dash-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
+  .dash-bar { width: 100%; max-width: 34px; border-radius: 6px 6px 0 0; background: #E3C7A2; }
+  .dash-bar.highlight { background: var(--color-accent); }
+  .dash-bar-label { font-size: 11.5px; color: var(--color-text-muted); }
+
+  .dash-list-title { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 24px 0 12px; padding-top: 18px; border-top: 1px solid var(--color-border); }
+  .dash-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(43,27,18,0.06); }
+  .dash-row-title { font-size: 13.5px; font-weight: 600; color: var(--color-text); }
+  .dash-row-sub { font-size: 12px; color: var(--color-text-muted); }
+  .dash-row-value { font-size: 14px; font-weight: 700; color: var(--color-text); }
+
+  .dash-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .dash-badge { background: var(--color-danger-bg); color: var(--color-danger); font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+  .dash-stock-value { font-size: 12.5px; font-weight: 700; color: var(--color-danger); }
+  .dash-see-all { display: block; text-align: center; margin-top: 16px; font-size: 13px; font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body data-page="dashboard">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content">
+    <div class="dash-header">
+      <div>
+        <div class="dash-greeting" id="dash-greeting">Olá</div>
+        <div class="dash-date" id="dash-date"></div>
+      </div>
+      <div class="dash-store-badge">Loja: <strong>Torra — Unidade Centro</strong></div>
+    </div>
+
+    <!-- TODO (Etapa 6 - Dashboard): substituir os valores abaixo por dados reais vindos da API -->
+    <div class="dash-stats" id="dash-stats"></div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <div class="dash-card-title">Vendas da semana</div>
+        <div class="dash-bars" id="dash-bars"></div>
+
+        <div class="dash-list-title">Vendas recentes</div>
+        <div id="dash-recent-sales"></div>
+      </div>
+
+      <div class="card">
+        <div class="dash-panel-header">
+          <div class="dash-card-title" style="margin-bottom:0;">Estoque baixo</div>
+          <span class="dash-badge" id="dash-low-stock-count"></span>
+        </div>
+        <div id="dash-low-stock"></div>
+        <a href="produtos.html" class="dash-see-all">Ver todos os produtos →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // Dados de exemplo (mesmos do protótipo original) — serão substituídos por
+  // chamadas reais à API na Etapa 6 (Dashboard). Mantidos aqui só para
+  // preservar a fidelidade visual da tela nesta etapa de setup.
+  const stats = [
+    { label: 'Vendas hoje', value: 'R$ 1.284,50', sub: '+12% vs. ontem', tone: 'success' },
+    { label: 'Pedidos hoje', value: '47', sub: '+5 desde 12h', tone: 'success' },
+    { label: 'Ticket médio', value: 'R$ 27,33', sub: 'estável', tone: 'muted' },
+    { label: 'Estoque baixo', value: '5', sub: 'produtos precisam repor', tone: 'danger' },
+  ];
+  const weekBars = [
+    { label: 'Seg', height: '55%' }, { label: 'Ter', height: '68%' },
+    { label: 'Qua', height: '45%' }, { label: 'Qui', height: '80%' },
+    { label: 'Sex', height: '100%', highlight: true }, { label: 'Sáb', height: '92%' },
+    { label: 'Dom', height: '30%' },
+  ];
+  const recentSales = [
+    { cliente: 'Venda avulsa', itens: '2 itens', hora: '14:32', total: 'R$ 24,00' },
+    { cliente: 'Marina Costa', itens: '4 itens', hora: '14:10', total: 'R$ 58,90' },
+    { cliente: 'Venda avulsa', itens: '1 item', hora: '13:47', total: 'R$ 9,50' },
+    { cliente: 'Pedro Nogueira', itens: '3 itens', hora: '13:22', total: 'R$ 41,20' },
+  ];
+  const lowStock = [
+    { nome: 'Café em grãos 1kg', sku: 'P014', estoque: 3 },
+    { nome: 'Copo 300ml biodegradável', sku: 'P028', estoque: 8 },
+    { nome: 'Leite integral 1L', sku: 'P006', estoque: 4 },
+    { nome: 'Pão de queijo (un.)', sku: 'P031', estoque: 6 },
+    { nome: 'Canudo de papel', sku: 'P040', estoque: 2 },
+  ];
+
+  const toneColor = { success: 'var(--color-success)', danger: 'var(--color-danger)', muted: 'var(--color-text-muted)' };
+
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  document.getElementById('dash-stats').innerHTML = stats.map(s => `
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">${s.label}</div>
+      <div class="dash-stat-value" style="color:${s.tone === 'danger' ? 'var(--color-danger)' : 'var(--color-text)'}">${s.value}</div>
+      <div class="dash-stat-sub" style="color:${toneColor[s.tone]}">${s.sub}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('dash-bars').innerHTML = weekBars.map(b => `
+    <div class="dash-bar-col">
+      <div class="dash-bar${b.highlight ? ' highlight' : ''}" style="height:${b.height}"></div>
+      <div class="dash-bar-label">${b.label}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('dash-recent-sales').innerHTML = recentSales.map(s => `
+    <div class="dash-row">
+      <div>
+        <div class="dash-row-title">${s.cliente}</div>
+        <div class="dash-row-sub">${s.itens} · ${s.hora}</div>
+      </div>
+      <div class="dash-row-value">${s.total}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('dash-low-stock').innerHTML = lowStock.map(p => `
+    <div class="dash-row">
+      <div>
+        <div class="dash-row-title">${p.nome}</div>
+        <div class="dash-row-sub">SKU ${p.sku}</div>
+      </div>
+      <span class="dash-stock-value">${p.estoque} un.</span>
+    </div>
+  `).join('');
+
+  document.getElementById('dash-low-stock-count').textContent = lowStock.length;
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produtos — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .produtos-grid { grid-template-columns: 90px 2fr 1.1fr 1.3fr 90px 110px 90px 110px; }
+</style>
+</head>
+<body data-page="produtos">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content">
+    <div class="page-header">
+      <div class="page-title">Produtos</div>
+      <button class="btn btn-primary" id="btn-novo-produto">+ Novo Produto</button>
+    </div>
+    <div class="page-subtitle">Controle de estoque integrado ao catálogo de venda.</div>
+
+    <div class="toolbar">
+      <input type="text" class="input" id="filtro-busca" placeholder="Buscar por nome ou SKU...">
+      <select class="select" id="filtro-categoria">
+        <option value="todas">Todas as categorias</option>
+        <option value="Bebidas">Bebidas</option>
+        <option value="Salgados">Salgados</option>
+        <option value="Sobremesas">Sobremesas</option>
+        <option value="Insumos">Insumos</option>
+      </select>
+    </div>
+
+    <div class="table-card">
+      <div class="table-head-row produtos-grid">
+        <div>SKU</div><div>NOME</div><div>CATEGORIA</div><div>FORNECEDOR</div><div>PREÇO</div><div>ESTOQUE</div><div>STATUS</div><div>AÇÕES</div>
+      </div>
+      <!-- TODO (Etapa 4 - Produtos/Estoque): substituir por GET /api/produtos -->
+      <div id="produtos-tbody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-produto" style="display:none;">
+    <div class="modal">
+      <div class="modal-title">Novo Produto</div>
+      <form id="form-produto">
+        <div class="field-grid">
+          <label class="field field-full">
+            <span>Nome do produto</span>
+            <input type="text" name="nome" placeholder="Ex: Cappuccino 300ml" required>
+          </label>
+          <label class="field">
+            <span>SKU</span>
+            <input type="text" name="sku" placeholder="P0XX" required>
+          </label>
+          <label class="field">
+            <span>Categoria</span>
+            <select name="categoria">
+              <option>Bebidas</option><option>Salgados</option><option>Sobremesas</option><option>Insumos</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Fornecedor</span>
+            <select name="fornecedor">
+              <option>Torrefação Serra Alta</option><option>Laticínios Vale Verde</option><option>Embalagens Eco</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Preço de venda</span>
+            <input type="text" name="preco" placeholder="R$ 0,00">
+          </label>
+          <label class="field">
+            <span>Estoque atual</span>
+            <input type="number" name="estoque" placeholder="0">
+          </label>
+          <label class="field">
+            <span>Estoque mínimo</span>
+            <input type="number" name="estoqueMinimo" placeholder="0">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-produto">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Produto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // Dados de exemplo (mesmos do protótipo original) — serão substituídos por
+  // chamadas reais à API na Etapa 4 (Produtos + Estoque).
+  const PRODUCTS = [
+    { sku: 'P001', nome: 'Café expresso', categoria: 'Bebidas', fornecedor: 'Torrefação Serra Alta', preco: 'R$ 6,50', estoque: 42, minimo: 10, ativo: true },
+    { sku: 'P006', nome: 'Leite integral 1L', categoria: 'Insumos', fornecedor: 'Laticínios Vale Verde', preco: '—', estoque: 4, minimo: 10, ativo: true },
+    { sku: 'P009', nome: 'Cappuccino 300ml', categoria: 'Bebidas', fornecedor: 'Torrefação Serra Alta', preco: 'R$ 11,90', estoque: 30, minimo: 8, ativo: true },
+    { sku: 'P014', nome: 'Café em grãos 1kg', categoria: 'Insumos', fornecedor: 'Torrefação Serra Alta', preco: '—', estoque: 3, minimo: 5, ativo: true },
+    { sku: 'P018', nome: 'Pão de queijo (un.)', categoria: 'Salgados', fornecedor: 'Padaria Boa Hora', preco: 'R$ 5,00', estoque: 6, minimo: 15, ativo: true },
+    { sku: 'P022', nome: 'Bolo de cenoura (fatia)', categoria: 'Sobremesas', fornecedor: 'Padaria Boa Hora', preco: 'R$ 9,50', estoque: 18, minimo: 6, ativo: true },
+    { sku: 'P028', nome: 'Copo 300ml biodegradável', categoria: 'Insumos', fornecedor: 'Embalagens Eco', preco: '—', estoque: 8, minimo: 20, ativo: true },
+    { sku: 'P033', nome: 'Torta de limão (fatia)', categoria: 'Sobremesas', fornecedor: 'Padaria Boa Hora', preco: 'R$ 10,00', estoque: 12, minimo: 5, ativo: false },
+    { sku: 'P040', nome: 'Canudo de papel', categoria: 'Insumos', fornecedor: 'Embalagens Eco', preco: '—', estoque: 2, minimo: 30, ativo: true },
+  ];
+
+  const buscaInput = document.getElementById('filtro-busca');
+  const categoriaSelect = document.getElementById('filtro-categoria');
+  const tbody = document.getElementById('produtos-tbody');
+
+  function renderProdutos() {
+    const busca = buscaInput.value.toLowerCase();
+    const categoria = categoriaSelect.value;
+
+    const filtrados = PRODUCTS
+      .filter(p => categoria === 'todas' || p.categoria === categoria)
+      .filter(p => !busca || p.nome.toLowerCase().includes(busca) || p.sku.toLowerCase().includes(busca));
+
+    if (filtrados.length === 0) {
+      tbody.innerHTML = '<div class="empty-state">Nenhum produto encontrado.</div>';
+      return;
+    }
+
+    tbody.innerHTML = filtrados.map(p => {
+      const baixo = p.estoque < p.minimo;
+      return `
+        <div class="table-row produtos-grid">
+          <div style="color:var(--color-text-muted);font-size:12.5px;">${p.sku}</div>
+          <div style="font-weight:600;">${p.nome}</div>
+          <div style="color:var(--color-text-secondary);">${p.categoria}</div>
+          <div style="color:var(--color-text-secondary);">${p.fornecedor}</div>
+          <div>${p.preco}</div>
+          <div><span class="pill ${baixo ? 'pill-danger' : 'pill-success'}">${p.estoque} un.</span></div>
+          <div><span class="pill pill-sm ${p.ativo ? 'pill-success' : 'pill-neutral'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></div>
+          <div class="table-actions"><a href="#">Editar</a></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  buscaInput.addEventListener('input', renderProdutos);
+  categoriaSelect.addEventListener('change', renderProdutos);
+  renderProdutos();
+
+  const modal = document.getElementById('modal-produto');
+  document.getElementById('btn-novo-produto').addEventListener('click', () => modal.style.display = 'flex');
+  document.getElementById('btn-cancelar-produto').addEventListener('click', () => modal.style.display = 'none');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  // TODO (Etapa 4 - Produtos/Estoque): substituir por POST real para /api/produtos.
+  document.getElementById('form-produto').addEventListener('submit', (e) => {
+    e.preventDefault();
+    console.log('Salvar produto ainda não implementado — aguardando Etapa 4.');
+  });
+</script>
+</body>
+</html>

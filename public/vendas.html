@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendas — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .vendas-content { display: flex; gap: 24px; align-items: flex-start; }
+  .vendas-catalog { flex: 1.6; min-width: 0; }
+  .vendas-title { font-family: var(--font-heading); font-size: 30px; font-weight: 700; color: var(--color-text); margin-bottom: 20px; }
+
+  .cat-chips { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .cat-chip {
+    border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary);
+    font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 20px; cursor: pointer; font-family: var(--font-body);
+  }
+  .cat-chip.active { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-dark); }
+
+  .item-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .item-card {
+    text-align: left; border: 1px solid var(--color-border); background: var(--color-card-bg);
+    border-radius: 12px; padding: 16px; cursor: pointer; font-family: var(--font-body);
+  }
+  .item-nome { font-size: 14px; font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
+  .item-categoria { font-size: 12px; color: var(--color-text-muted); margin-bottom: 10px; }
+  .item-preco { font-size: 15px; font-weight: 700; color: var(--color-accent); }
+
+  .cart-panel {
+    flex: 1; min-width: 340px; max-width: 380px; background: var(--color-card-bg);
+    border: 1px solid var(--color-border); border-radius: 16px; padding: 24px; position: sticky; top: 40px;
+  }
+  .cart-title { font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 16px; }
+  .cart-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+  .cart-field span { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+  .cart-field select, .cart-field input {
+    border: 1px solid var(--color-border-strong); border-radius: 9px; padding: 9px 11px;
+    font-size: 13.5px; font-family: var(--font-body); background: #fff;
+  }
+
+  .cart-items { display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; margin-bottom: 16px; }
+  .cart-empty { font-size: 13px; color: var(--color-text-muted); padding: 24px 0; text-align: center; }
+  .cart-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .cart-item-name { font-size: 13.5px; font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cart-item-unit { font-size: 12px; color: var(--color-text-muted); }
+  .qty-controls { display: flex; align-items: center; gap: 8px; flex: none; }
+  .qty-btn { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--color-border-strong); background: #fff; cursor: pointer; font-size: 14px; color: var(--color-text); }
+  .qty-value { font-size: 13px; font-weight: 600; color: var(--color-text); width: 16px; text-align: center; }
+  .cart-item-subtotal { font-size: 13.5px; font-weight: 700; color: var(--color-text); width: 64px; text-align: right; }
+
+  .cart-total-row { border-top: 1px solid var(--color-border-strong); padding-top: 14px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+  .cart-total-label { font-size: 14px; font-weight: 600; color: var(--color-text); }
+  .cart-total-value { font-family: var(--font-heading); font-size: 26px; font-weight: 700; color: var(--color-text); }
+
+  .cart-finalizar { width: 100%; background: var(--color-accent); border: none; color: var(--color-accent-dark); font-weight: 700; font-size: 15px; padding: 13px 0; border-radius: 10px; cursor: pointer; font-family: var(--font-body); }
+  .cart-finalizar:disabled { opacity: .5; cursor: not-allowed; }
+</style>
+</head>
+<body data-page="vendas">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content vendas-content">
+    <div class="vendas-catalog">
+      <div class="vendas-title">Nova Venda</div>
+
+      <div class="cat-chips" id="cat-chips"></div>
+      <div class="item-grid" id="item-grid"></div>
+    </div>
+
+    <div class="cart-panel">
+      <div class="cart-title">Carrinho</div>
+
+      <label class="cart-field">
+        <span>Cliente (opcional)</span>
+        <select id="select-cliente">
+          <option value="">Venda avulsa</option>
+          <option value="Marina Costa">Marina Costa</option>
+          <option value="Pedro Nogueira">Pedro Nogueira</option>
+          <option value="Beatriz Lima">Beatriz Lima</option>
+        </select>
+      </label>
+
+      <div class="cart-items" id="cart-items"></div>
+
+      <label class="cart-field">
+        <span>Desconto (opcional)</span>
+        <input type="text" id="input-desconto" placeholder="R$ 0,00">
+      </label>
+
+      <div class="cart-total-row">
+        <span class="cart-total-label">Total</span>
+        <span class="cart-total-value" id="cart-total">R$ 0,00</span>
+      </div>
+
+      <button class="cart-finalizar" id="btn-finalizar" disabled>Finalizar Venda</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // Catálogo e lógica de carrinho (mesmos dados do protótipo original).
+  // TODO (Etapa 5 - Vendas): o catálogo virá de GET /api/produtos e "Finalizar
+  // Venda" fará POST /api/vendas, com bloqueio real por estoque insuficiente.
+  const ITEMS = [
+    { nome: 'Café expresso', categoria: 'Bebidas', preco: 6.5 },
+    { nome: 'Cappuccino 300ml', categoria: 'Bebidas', preco: 11.9 },
+    { nome: 'Latte 300ml', categoria: 'Bebidas', preco: 12.9 },
+    { nome: 'Suco natural 400ml', categoria: 'Bebidas', preco: 9.0 },
+    { nome: 'Pão de queijo (un.)', categoria: 'Salgados', preco: 5.0 },
+    { nome: 'Coxinha', categoria: 'Salgados', preco: 7.5 },
+    { nome: 'Bolo de cenoura', categoria: 'Sobremesas', preco: 9.5 },
+    { nome: 'Torta de limão', categoria: 'Sobremesas', preco: 10.0 },
+    { nome: 'Brownie', categoria: 'Sobremesas', preco: 8.0 },
+  ];
+  const CATS = ['Todos', 'Bebidas', 'Salgados', 'Sobremesas'];
+  const fmt = (n) => 'R$ ' + n.toFixed(2).replace('.', ',');
+
+  let catAtual = 'Todos';
+  let cart = {}; // { nome: qtd }
+
+  const chipsEl = document.getElementById('cat-chips');
+  const gridEl = document.getElementById('item-grid');
+  const cartItemsEl = document.getElementById('cart-items');
+  const cartTotalEl = document.getElementById('cart-total');
+  const descontoInput = document.getElementById('input-desconto');
+  const btnFinalizar = document.getElementById('btn-finalizar');
+
+  function renderChips() {
+    chipsEl.innerHTML = CATS.map(c => `
+      <button class="cat-chip${c === catAtual ? ' active' : ''}" data-cat="${c}">${c}</button>
+    `).join('');
+    chipsEl.querySelectorAll('.cat-chip').forEach(btn => {
+      btn.addEventListener('click', () => { catAtual = btn.dataset.cat; renderAll(); });
+    });
+  }
+
+  function renderGrid() {
+    const visiveis = ITEMS.filter(i => catAtual === 'Todos' || i.categoria === catAtual);
+    gridEl.innerHTML = visiveis.map(i => `
+      <button class="item-card" data-nome="${i.nome}">
+        <div class="item-nome">${i.nome}</div>
+        <div class="item-categoria">${i.categoria}</div>
+        <div class="item-preco">${fmt(i.preco)}</div>
+      </button>
+    `).join('');
+    gridEl.querySelectorAll('.item-card').forEach(btn => {
+      btn.addEventListener('click', () => { addItem(btn.dataset.nome); });
+    });
+  }
+
+  function addItem(nome) {
+    cart[nome] = (cart[nome] || 0) + 1;
+    renderCart();
+  }
+  function removeItem(nome) {
+    if (cart[nome] > 1) cart[nome] -= 1; else delete cart[nome];
+    renderCart();
+  }
+
+  function parseDesconto() {
+    const raw = (descontoInput.value || '0').replace(/[^\d,\.]/g, '').replace(',', '.');
+    return parseFloat(raw) || 0;
+  }
+
+  function renderCart() {
+    const entradas = Object.entries(cart);
+
+    if (entradas.length === 0) {
+      cartItemsEl.innerHTML = '<div class="cart-empty">Carrinho vazio — clique em um item para adicionar.</div>';
+    } else {
+      let subtotalSum = 0;
+      cartItemsEl.innerHTML = entradas.map(([nome, qtd]) => {
+        const item = ITEMS.find(i => i.nome === nome);
+        const sub = item.preco * qtd;
+        subtotalSum += sub;
+        return `
+          <div class="cart-item">
+            <div style="min-width:0;">
+              <div class="cart-item-name">${nome}</div>
+              <div class="cart-item-unit">${fmt(item.preco)} cada</div>
+            </div>
+            <div class="qty-controls">
+              <button class="qty-btn" data-minus="${nome}">–</button>
+              <span class="qty-value">${qtd}</span>
+              <button class="qty-btn" data-plus="${nome}">+</button>
+            </div>
+            <div class="cart-item-subtotal">${fmt(sub)}</div>
+          </div>
+        `;
+      }).join('');
+
+      cartItemsEl.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => addItem(b.dataset.plus)));
+      cartItemsEl.querySelectorAll('[data-minus]').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.minus)));
+    }
+
+    const subtotalSum = entradas.reduce((acc, [nome, qtd]) => acc + ITEMS.find(i => i.nome === nome).preco * qtd, 0);
+    const total = Math.max(0, subtotalSum - parseDesconto());
+    cartTotalEl.textContent = fmt(total);
+    btnFinalizar.disabled = entradas.length === 0;
+  }
+
+  function renderAll() { renderChips(); renderGrid(); renderCart(); }
+
+  descontoInput.addEventListener('input', renderCart);
+
+  btnFinalizar.addEventListener('click', () => {
+    console.log('Finalizar venda ainda não implementado — aguardando Etapa 5.');
+  });
+
+  renderAll();
+</script>
+</body>
+</html>

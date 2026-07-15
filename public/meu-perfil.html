@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu Perfil — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .perfil-content { max-width: 760px; }
+  .perfil-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+  .perfil-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--color-accent); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--color-accent-dark); }
+  .perfil-nome { font-size: 17px; font-weight: 700; color: var(--color-text); }
+
+  .perfil-card { background: var(--color-card-bg); border: 1px solid var(--color-border); border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+  .perfil-card-title { font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 18px; }
+  .perfil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .perfil-field { display: flex; flex-direction: column; gap: 5px; }
+  .perfil-field span { font-size: 12.5px; font-weight: 600; color: var(--color-text); }
+  .perfil-field input {
+    border: 1px solid var(--color-border-strong); border-radius: 9px; padding: 10px 12px;
+    font-size: 13.5px; font-family: var(--font-body); background: #fff; color: var(--color-text);
+  }
+
+  .perfil-btn-save { margin-top: 20px; background: var(--color-accent); border: none; color: var(--color-accent-dark); font-weight: 700; font-size: 14px; padding: 11px 20px; border-radius: 9px; cursor: pointer; font-family: var(--font-body); }
+  .perfil-btn-outline { margin-top: 20px; background: transparent; border: 1px solid var(--color-accent); color: var(--color-link); font-weight: 700; font-size: 14px; padding: 11px 20px; border-radius: 9px; cursor: pointer; font-family: var(--font-body); }
+
+  .perfil-msg { display: none; font-size: 13px; margin-top: 12px; padding: 10px 14px; border-radius: 8px; }
+  .perfil-msg.success { background: #EAF0E6; color: #4F6B44; }
+  .perfil-msg.error { background: var(--color-danger-bg); color: var(--color-danger); }
+</style>
+</head>
+<body data-page="">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content perfil-content">
+    <div class="page-title" style="margin-bottom:8px;">Meu Perfil</div>
+    <div class="page-subtitle">Gerencie suas informações pessoais e segurança da conta.</div>
+
+    <div class="perfil-header">
+      <div class="perfil-avatar" id="perfil-avatar">--</div>
+      <div>
+        <div class="perfil-nome" id="perfil-nome">Carregando...</div>
+        <span class="pill pill-sm pill-accent" id="perfil-cargo">—</span>
+      </div>
+    </div>
+
+    <div class="perfil-card">
+      <div class="perfil-card-title">Informações Pessoais</div>
+      <form id="form-dados-pessoais">
+        <div class="perfil-grid">
+          <label class="perfil-field" style="grid-column: span 2;">
+            <span>Nome completo</span>
+            <input type="text" name="nome" id="input-nome">
+          </label>
+          <label class="perfil-field">
+            <span>E-mail</span>
+            <input type="email" name="email" id="input-email">
+          </label>
+          <label class="perfil-field">
+            <span>Telefone</span>
+            <input type="text" name="telefone" id="input-telefone">
+          </label>
+        </div>
+        <button type="submit" class="perfil-btn-save">Salvar Alterações</button>
+        <div class="perfil-msg" id="msg-dados"></div>
+      </form>
+    </div>
+
+    <div class="perfil-card">
+      <div class="perfil-card-title">Alteração de Senha</div>
+      <form id="form-senha">
+        <div style="display:flex;flex-direction:column;gap:14px;max-width:380px;">
+          <label class="perfil-field">
+            <span>Senha atual</span>
+            <input type="password" name="senhaAtual" placeholder="••••••••" required>
+          </label>
+          <label class="perfil-field">
+            <span>Nova senha</span>
+            <input type="password" name="novaSenha" placeholder="••••••••" required>
+          </label>
+          <label class="perfil-field">
+            <span>Confirmar nova senha</span>
+            <input type="password" name="confirmarSenha" placeholder="••••••••" required>
+          </label>
+        </div>
+        <button type="submit" class="perfil-btn-outline">Atualizar Senha</button>
+        <div class="perfil-msg" id="msg-senha"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // TODO (Etapa 8 - Usuários/Perfil): substituir por GET /api/me (dados do
+  // usuário autenticado) e por PUT /api/me e /api/me/senha nos formulários.
+  document.getElementById('form-dados-pessoais').addEventListener('submit', (e) => {
+    e.preventDefault();
+    console.log('Salvar dados pessoais ainda não implementado — aguardando Etapa 8.');
+  });
+  document.getElementById('form-senha').addEventListener('submit', (e) => {
+    e.preventDefault();
+    console.log('Atualizar senha ainda não implementado — aguardando Etapa 8.');
+  });
+</script>
+</body>
+</html>

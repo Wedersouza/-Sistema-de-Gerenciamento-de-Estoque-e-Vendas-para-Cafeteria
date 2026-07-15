@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fornecedores — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .fornecedores-grid { grid-template-columns: 1.4fr 1.6fr 1.1fr 1fr 1.6fr 90px 90px; }
+</style>
+</head>
+<body data-page="fornecedores">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content">
+    <div class="page-header">
+      <div class="page-title">Fornecedores</div>
+      <button class="btn btn-primary" id="btn-novo-fornecedor">+ Novo Fornecedor</button>
+    </div>
+    <div class="page-subtitle">Parceiros que abastecem seu estoque.</div>
+
+    <input type="text" class="input" id="filtro-busca" style="max-width:380px;display:block;margin-bottom:20px;" placeholder="Buscar por nome ou CNPJ...">
+
+    <div class="table-card">
+      <div class="table-head-row fornecedores-grid">
+        <div>NOME FANTASIA</div><div>RAZÃO SOCIAL</div><div>CNPJ</div><div>TELEFONE</div><div>ENDEREÇO</div><div>STATUS</div><div>AÇÕES</div>
+      </div>
+      <!-- TODO (Etapa 7 - Clientes/Fornecedores): substituir por GET /api/fornecedores -->
+      <div id="fornecedores-tbody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-fornecedor" style="display:none;">
+    <div class="modal" style="width:460px;">
+      <div class="modal-title">Novo Fornecedor</div>
+      <form id="form-fornecedor">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <label class="field">
+            <span>Nome fantasia</span>
+            <input type="text" name="fantasia" placeholder="Ex: Torrefação Serra Alta" required>
+          </label>
+          <label class="field">
+            <span>Razão social</span>
+            <input type="text" name="razao" placeholder="Ex: Serra Alta Comércio de Café Ltda.">
+          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>CNPJ</span>
+              <input type="text" name="cnpj" placeholder="00.000.000/0001-00">
+            </label>
+            <label class="field">
+              <span>Telefone</span>
+              <input type="text" name="telefone" placeholder="(11) 3000-0000">
+            </label>
+          </div>
+          <label class="field">
+            <span>Endereço</span>
+            <input type="text" name="endereco" placeholder="Rua, número, bairro, cidade">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-fornecedor">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Fornecedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // Dados de exemplo — serão substituídos por chamadas reais à API na Etapa 7.
+  const SUPPLIERS = [
+    { fantasia: 'Torrefação Serra Alta', razao: 'Serra Alta Comércio de Café Ltda.', cnpj: '12.345.678/0001-90', telefone: '(11) 3222-4400', endereco: 'Rod. dos Cafezais, km 12', ativo: true },
+    { fantasia: 'Laticínios Vale Verde', razao: 'Vale Verde Laticínios S.A.', cnpj: '23.456.789/0001-11', telefone: '(11) 3344-5566', endereco: 'Estrada do Leite, 800', ativo: true },
+    { fantasia: 'Padaria Boa Hora', razao: 'Boa Hora Panificados Ltda.', cnpj: '34.567.890/0001-22', telefone: '(11) 3455-6677', endereco: 'Rua do Trigo, 210', ativo: true },
+    { fantasia: 'Embalagens Eco', razao: 'Eco Embalagens Sustentáveis Ltda.', cnpj: '45.678.901/0001-33', telefone: '(11) 3566-7788', endereco: 'Av. Industrial, 1500', ativo: false },
+  ];
+
+  const buscaInput = document.getElementById('filtro-busca');
+  const tbody = document.getElementById('fornecedores-tbody');
+
+  function renderFornecedores() {
+    const q = buscaInput.value.toLowerCase();
+    const filtrados = SUPPLIERS.filter(f =>
+      !q || f.fantasia.toLowerCase().includes(q) || f.cnpj.includes(q)
+    );
+
+    if (filtrados.length === 0) {
+      tbody.innerHTML = '<div class="empty-state">Nenhum fornecedor encontrado.</div>';
+      return;
+    }
+
+    tbody.innerHTML = filtrados.map(f => `
+      <div class="table-row fornecedores-grid">
+        <div style="font-weight:600;">${f.fantasia}</div>
+        <div style="color:var(--color-text-secondary);">${f.razao}</div>
+        <div style="color:var(--color-text-secondary);">${f.cnpj}</div>
+        <div style="color:var(--color-text-secondary);">${f.telefone}</div>
+        <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.endereco}</div>
+        <div><span class="pill pill-sm ${f.ativo ? 'pill-success' : 'pill-neutral'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></div>
+        <div class="table-actions"><a href="#">Editar</a></div>
+      </div>
+    `).join('');
+  }
+
+  buscaInput.addEventListener('input', renderFornecedores);
+  renderFornecedores();
+
+  const modal = document.getElementById('modal-fornecedor');
+  document.getElementById('btn-novo-fornecedor').addEventListener('click', () => modal.style.display = 'flex');
+  document.getElementById('btn-cancelar-fornecedor').addEventListener('click', () => modal.style.display = 'none');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  // TODO (Etapa 7 - Clientes/Fornecedores): substituir por POST real para /api/fornecedores.
+  document.getElementById('form-fornecedor').addEventListener('submit', (e) => {
+    e.preventDefault();
+    console.log('Salvar fornecedor ainda não implementado — aguardando Etapa 7.');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Criar conta — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:ital,wght@0,500;0,700;1,500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .login-layout { min-height: 100vh; display: flex; }
+
+  .login-hero {
+    flex: 1.1;
+    min-width: 420px;
+    background: radial-gradient(circle at 30% 20%, #4A2E1E, #2A190E 70%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 64px;
+  }
+  .login-hero::before {
+    content: "";
+    position: absolute; top: -60px; right: -60px;
+    width: 280px; height: 280px; border-radius: 50%;
+    border: 1px solid rgba(243,231,214,0.15);
+  }
+  .login-hero::after {
+    content: "";
+    position: absolute; bottom: -100px; left: -80px;
+    width: 320px; height: 320px; border-radius: 50%;
+    background: rgba(199,123,59,0.15);
+  }
+  .login-hero-content { position: relative; z-index: 1; }
+  .login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+  .login-brand-icon {
+    width: 44px; height: 44px; border-radius: 12px; background: var(--color-accent);
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .login-brand-name { font-family: var(--font-heading); font-size: 26px; font-weight: 700; color: var(--sidebar-headline); }
+  .login-headline { font-family: var(--font-heading); font-size: 40px; line-height: 1.15; color: var(--sidebar-headline); max-width: 420px; margin-bottom: 20px; }
+  .login-subtext { font-size: 15px; line-height: 1.6; color: var(--sidebar-text-muted); max-width: 360px; }
+
+  .login-form-side { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; overflow-y: auto; }
+  .login-form-wrap { width: 100%; max-width: 400px; padding: 40px 0; }
+  .login-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--color-text-muted); margin-bottom: 6px; }
+  .login-title { font-family: var(--font-heading); font-size: 30px; font-weight: 700; color: var(--color-text); margin-bottom: 28px; }
+
+  .login-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .login-field span { font-size: 13px; font-weight: 600; color: var(--color-text); }
+  .login-field input {
+    border: 1px solid var(--color-border-strong); border-radius: 10px;
+    padding: 12px 14px; font-size: 14px; font-family: var(--font-body);
+    background: var(--color-card-bg); color: var(--color-text); outline: none;
+  }
+  .login-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .login-submit {
+    display: block; width: 100%; text-align: center; text-decoration: none;
+    background: var(--color-accent); color: var(--color-accent-dark); font-weight: 700;
+    font-size: 15px; padding: 13px 0; border: none; border-radius: 10px; cursor: pointer;
+    font-family: var(--font-body); margin-top: 6px;
+  }
+
+  .login-signup {
+    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-border-strong);
+    text-align: center; font-size: 13.5px; color: var(--color-text-secondary);
+  }
+  .login-signup a { font-weight: 600; text-decoration: none; }
+
+  .login-error {
+    display: none; background: var(--color-danger-bg); color: var(--color-danger);
+    font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-layout">
+  <div class="login-hero">
+    <div class="login-hero-content">
+      <div class="login-brand">
+        <div class="login-brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 9h13a3 3 0 0 1 0 6h-1" stroke="#2A190E" stroke-width="1.8" stroke-linecap="round"/><path d="M4 9v7a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V9" stroke="#2A190E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 5.5c0 1-1 1-1 2M11 5.5c0 1-1 1-1 2" stroke="#2A190E" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="login-brand-name">Torra</div>
+      </div>
+      <div class="login-headline">Junte-se à equipe da sua cafeteria.</div>
+      <div class="login-subtext">Toda nova conta entra como Funcionário — um administrador libera acessos adicionais depois.</div>
+    </div>
+  </div>
+
+  <div class="login-form-side">
+    <div class="login-form-wrap">
+      <div class="login-eyebrow">PRIMEIRO ACESSO</div>
+      <div class="login-title">Criar sua conta</div>
+
+      <div class="login-error" id="cadastro-error"></div>
+
+      <form id="cadastro-form">
+        <label class="login-field">
+          <span>Nome completo</span>
+          <input type="text" name="nome" placeholder="Seu nome" required>
+        </label>
+        <label class="login-field">
+          <span>E-mail</span>
+          <input type="email" name="email" placeholder="voce@torracafe.com" required>
+        </label>
+        <label class="login-field">
+          <span>Telefone</span>
+          <input type="text" name="telefone" placeholder="(11) 90000-0000">
+        </label>
+        <label class="login-field">
+          <span>Login</span>
+          <input type="text" name="login" placeholder="usuario.nome" required>
+        </label>
+        <div class="login-field-row">
+          <label class="login-field">
+            <span>Senha</span>
+            <input type="password" name="senha" placeholder="••••••••" required>
+          </label>
+          <label class="login-field">
+            <span>Confirmar</span>
+            <input type="password" name="confirmarSenha" placeholder="••••••••" required>
+          </label>
+        </div>
+        <button type="submit" class="login-submit">Criar conta</button>
+      </form>
+
+      <div class="login-signup">
+        Já tem conta? <a href="login.html">Entrar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // TODO (Etapa 8 - Usuários e Perfil): substituir por POST real para /api/usuarios.
+  // Regra de negócio já definida: todo autocadastro entra como Funcionário.
+  document.getElementById("cadastro-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    console.log("Cadastro ainda não implementado — aguardando Etapa 8.");
+  });
+</script>
+</body>
+</html>

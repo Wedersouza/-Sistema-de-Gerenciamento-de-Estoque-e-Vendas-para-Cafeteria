@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clientes — Torra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .clientes-grid { grid-template-columns: 1.4fr 1fr 1.4fr 1.6fr 100px 90px; }
+</style>
+</head>
+<body data-page="clientes">
+
+<div class="app-layout">
+  <div id="sidebar-container"></div>
+
+  <div class="app-content">
+    <div class="page-header">
+      <div class="page-title">Clientes</div>
+      <button class="btn btn-primary" id="btn-novo-cliente">+ Novo Cliente</button>
+    </div>
+    <div class="page-subtitle">Base de clientes para vendas com histórico.</div>
+
+    <input type="text" class="input" id="filtro-busca" style="max-width:380px;display:block;margin-bottom:20px;" placeholder="Buscar por nome, telefone ou e-mail...">
+
+    <div class="table-card">
+      <div class="table-head-row clientes-grid">
+        <div>NOME</div><div>TELEFONE</div><div>E-MAIL</div><div>ENDEREÇO</div><div>STATUS</div><div>AÇÕES</div>
+      </div>
+      <!-- TODO (Etapa 7 - Clientes/Fornecedores): substituir por GET /api/clientes -->
+      <div id="clientes-tbody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-cliente" style="display:none;">
+    <div class="modal" style="width:440px;">
+      <div class="modal-title">Novo Cliente</div>
+      <form id="form-cliente">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <label class="field">
+            <span>Nome completo</span>
+            <input type="text" name="nome" placeholder="Ex: Marina Costa" required>
+          </label>
+          <label class="field">
+            <span>Telefone</span>
+            <input type="text" name="telefone" placeholder="(11) 90000-0000">
+          </label>
+          <label class="field">
+            <span>E-mail</span>
+            <input type="email" name="email" placeholder="nome@email.com">
+          </label>
+          <label class="field">
+            <span>Endereço</span>
+            <input type="text" name="endereco" placeholder="Rua, número, bairro">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-cliente">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/partials.js"></script>
+<script>
+  // Dados de exemplo — serão substituídos por chamadas reais à API na Etapa 7.
+  const CLIENTS = [
+    { nome: 'Marina Costa', telefone: '(11) 98211-4432', email: 'marina.costa@email.com', endereco: 'Rua das Acácias, 120', ativo: true },
+    { nome: 'Pedro Nogueira', telefone: '(11) 97744-2210', email: 'pedro.n@email.com', endereco: 'Av. Brasil, 900', ativo: true },
+    { nome: 'Beatriz Lima', telefone: '(11) 96633-8871', email: 'bia.lima@email.com', endereco: 'Rua Sete de Setembro, 45', ativo: true },
+    { nome: 'Rafael Torres', telefone: '(11) 95522-1190', email: 'rafael.torres@email.com', endereco: 'Rua dos Ipês, 310', ativo: false },
+    { nome: 'Juliana Prado', telefone: '(11) 99887-6541', email: 'ju.prado@email.com', endereco: 'Alameda Santos, 78', ativo: true },
+    { nome: 'Carlos Menezes', telefone: '(11) 94433-2287', email: 'carlos.mz@email.com', endereco: 'Rua Bela Vista, 512', ativo: true },
+  ];
+
+  const buscaInput = document.getElementById('filtro-busca');
+  const tbody = document.getElementById('clientes-tbody');
+
+  function renderClientes() {
+    const q = buscaInput.value.toLowerCase();
+    const filtrados = CLIENTS.filter(c =>
+      !q || c.nome.toLowerCase().includes(q) || c.telefone.includes(q) || c.email.toLowerCase().includes(q)
+    );
+
+    if (filtrados.length === 0) {
+      tbody.innerHTML = '<div class="empty-state">Nenhum cliente encontrado.</div>';
+      return;
+    }
+
+    tbody.innerHTML = filtrados.map(c => `
+      <div class="table-row clientes-grid">
+        <div style="font-weight:600;">${c.nome}</div>
+        <div style="color:var(--color-text-secondary);">${c.telefone}</div>
+        <div style="color:var(--color-text-secondary);">${c.email}</div>
+        <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.endereco}</div>
+        <div><span class="pill pill-sm ${c.ativo ? 'pill-success' : 'pill-neutral'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></div>
+        <div class="table-actions"><a href="#">Editar</a></div>
+      </div>
+    `).join('');
+  }
+
+  buscaInput.addEventListener('input', renderClientes);
+  renderClientes();
+
+  const modal = document.getElementById('modal-cliente');
+  document.getElementById('btn-novo-cliente').addEventListener('click', () => modal.style.display = 'flex');
+  document.getElementById('btn-cancelar-cliente').addEventListener('click', () => modal.style.display = 'none');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  // TODO (Etapa 7 - Clientes/Fornecedores): substituir por POST real para /api/clientes.
+  document.getElementById('form-cliente').addEventListener('submit', (e) => {
+    e.preventDefault();
+    console.log('Salvar cliente ainda não implementado — aguardando Etapa 7.');
+  });
+</script>
+</body>
+</html>
