@@ -122,10 +122,36 @@
 </div>
 
 <script>
-  // TODO (Etapa 3 - Autenticação): substituir por POST real para /api/login.
-  document.getElementById("login-form").addEventListener("submit", (e) => {
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log("Login ainda não implementado — aguardando Etapa 3.");
+
+    const errorBox = document.getElementById("login-error");
+    errorBox.style.display = "none";
+
+    const dados = new FormData(e.target);
+    const login = dados.get("login");
+    const senha = dados.get("senha");
+
+    try {
+      const resp = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login, senha }),
+      });
+
+      const resultado = await resp.json();
+
+      if (!resp.ok) {
+        errorBox.textContent = resultado.erro || "Não foi possível entrar.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      window.location.href = "dashboard.html";
+    } catch (erro) {
+      errorBox.textContent = "Erro de conexão com o servidor.";
+      errorBox.style.display = "block";
+    }
   });
 </script>
 </body>
