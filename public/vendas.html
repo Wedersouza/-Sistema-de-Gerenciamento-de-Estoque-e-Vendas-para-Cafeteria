@@ -78,9 +78,6 @@
         <span>Cliente (opcional)</span>
         <select id="select-cliente">
           <option value="">Venda avulsa</option>
-          <option value="Marina Costa">Marina Costa</option>
-          <option value="Pedro Nogueira">Pedro Nogueira</option>
-          <option value="Beatriz Lima">Beatriz Lima</option>
         </select>
       </label>
 
@@ -103,25 +100,13 @@
 
 <script src="js/partials.js"></script>
 <script>
-  // Catálogo e lógica de carrinho (mesmos dados do protótipo original).
-  // TODO (Etapa 5 - Vendas): o catálogo virá de GET /api/produtos e "Finalizar
-  // Venda" fará POST /api/vendas, com bloqueio real por estoque insuficiente.
-  const ITEMS = [
-    { nome: 'Café expresso', categoria: 'Bebidas', preco: 6.5 },
-    { nome: 'Cappuccino 300ml', categoria: 'Bebidas', preco: 11.9 },
-    { nome: 'Latte 300ml', categoria: 'Bebidas', preco: 12.9 },
-    { nome: 'Suco natural 400ml', categoria: 'Bebidas', preco: 9.0 },
-    { nome: 'Pão de queijo (un.)', categoria: 'Salgados', preco: 5.0 },
-    { nome: 'Coxinha', categoria: 'Salgados', preco: 7.5 },
-    { nome: 'Bolo de cenoura', categoria: 'Sobremesas', preco: 9.5 },
-    { nome: 'Torta de limão', categoria: 'Sobremesas', preco: 10.0 },
-    { nome: 'Brownie', categoria: 'Sobremesas', preco: 8.0 },
-  ];
-  const CATS = ['Todos', 'Bebidas', 'Salgados', 'Sobremesas'];
+  let ITEMS = [];
+  let CATS = ['Todos'];
+
   const fmt = (n) => 'R$ ' + n.toFixed(2).replace('.', ',');
 
   let catAtual = 'Todos';
-  let cart = {}; // { nome: qtd }
+  let cart = {}; // { produtoId: qtd }
 
   const chipsEl = document.getElementById('cat-chips');
   const gridEl = document.getElementById('item-grid');
@@ -129,6 +114,14 @@
   const cartTotalEl = document.getElementById('cart-total');
   const descontoInput = document.getElementById('input-desconto');
   const btnFinalizar = document.getElementById('btn-finalizar');
+
+  async function carregarProdutos() {
+    const resp = await fetch('/api/produtos');
+    const produtos = await resp.json();
+    ITEMS = produtos.filter(p => p.ativo && p.estoque > 0);
+    CATS = ['Todos', ...new Set(ITEMS.map(p => p.categoria).filter(Boolean))];
+    renderAll();
+  }
 
   function renderChips() {
     chipsEl.innerHTML = CATS.map(c => `
@@ -142,23 +135,23 @@
   function renderGrid() {
     const visiveis = ITEMS.filter(i => catAtual === 'Todos' || i.categoria === catAtual);
     gridEl.innerHTML = visiveis.map(i => `
-      <button class="item-card" data-nome="${i.nome}">
+      <button class="item-card" data-id="${i.id}">
         <div class="item-nome">${i.nome}</div>
-        <div class="item-categoria">${i.categoria}</div>
+        <div class="item-categoria">${i.categoria || '—'}</div>
         <div class="item-preco">${fmt(i.preco)}</div>
       </button>
     `).join('');
     gridEl.querySelectorAll('.item-card').forEach(btn => {
-      btn.addEventListener('click', () => { addItem(btn.dataset.nome); });
+      btn.addEventListener('click', () => { addItem(btn.dataset.id); });
     });
   }
 
-  function addItem(nome) {
-    cart[nome] = (cart[nome] || 0) + 1;
+  function addItem(id) {
+    cart[id] = (cart[id] || 0) + 1;
     renderCart();
   }
-  function removeItem(nome) {
-    if (cart[nome] > 1) cart[nome] -= 1; else delete cart[nome];
+  function removeItem(id) {
+    if (cart[id] > 1) cart[id] -= 1; else delete cart[id];
     renderCart();
   }
 
@@ -173,21 +166,19 @@
     if (entradas.length === 0) {
       cartItemsEl.innerHTML = '<div class="cart-empty">Carrinho vazio — clique em um item para adicionar.</div>';
     } else {
-      let subtotalSum = 0;
-      cartItemsEl.innerHTML = entradas.map(([nome, qtd]) => {
-        const item = ITEMS.find(i => i.nome === nome);
+      cartItemsEl.innerHTML = entradas.map(([id, qtd]) => {
+        const item = ITEMS.find(i => i.id == id);
         const sub = item.preco * qtd;
-        subtotalSum += sub;
         return `
           <div class="cart-item">
             <div style="min-width:0;">
-              <div class="cart-item-name">${nome}</div>
+              <div class="cart-item-name">${item.nome}</div>
               <div class="cart-item-unit">${fmt(item.preco)} cada</div>
             </div>
             <div class="qty-controls">
-              <button class="qty-btn" data-minus="${nome}">–</button>
+              <button class="qty-btn" data-minus="${id}">–</button>
               <span class="qty-value">${qtd}</span>
-              <button class="qty-btn" data-plus="${nome}">+</button>
+              <button class="qty-btn" data-plus="${id}">+</button>
             </div>
             <div class="cart-item-subtotal">${fmt(sub)}</div>
           </div>
@@ -198,7 +189,7 @@
       cartItemsEl.querySelectorAll('[data-minus]').forEach(b => b.addEventListener('click', () => removeItem(b.dataset.minus)));
     }
 
-    const subtotalSum = entradas.reduce((acc, [nome, qtd]) => acc + ITEMS.find(i => i.nome === nome).preco * qtd, 0);
+    const subtotalSum = entradas.reduce((acc, [id, qtd]) => acc + ITEMS.find(i => i.id == id).preco * qtd, 0);
     const total = Math.max(0, subtotalSum - parseDesconto());
     cartTotalEl.textContent = fmt(total);
     btnFinalizar.disabled = entradas.length === 0;
@@ -208,11 +199,36 @@
 
   descontoInput.addEventListener('input', renderCart);
 
-  btnFinalizar.addEventListener('click', () => {
-    console.log('Finalizar venda ainda não implementado — aguardando Etapa 5.');
+  btnFinalizar.addEventListener('click', async () => {
+    const itens = Object.entries(cart).map(([id, quantidade]) => ({
+      produto_id: Number(id),
+      quantidade,
+    }));
+
+    const resp = await fetch('/api/vendas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itens,
+        cliente_id: null,
+        desconto: parseDesconto(),
+      }),
+    });
+
+    const resultado = await resp.json();
+
+    if (!resp.ok) {
+      alert(resultado.erro || 'Erro ao finalizar venda.');
+      return;
+    }
+
+    alert('Venda registrada com sucesso!');
+    cart = {};
+    descontoInput.value = '';
+    carregarProdutos(); // recarrega para refletir o estoque atualizado
   });
 
-  renderAll();
+  carregarProdutos();
 </script>
 </body>
 </html>
