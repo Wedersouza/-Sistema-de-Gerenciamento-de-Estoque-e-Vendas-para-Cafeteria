@@ -107,6 +107,7 @@
         <div style="color:var(--color-text-muted);font-size:12.5px;">${u.ultimo_acesso || '—'}</div>
         <div class="table-actions">
           ${u.ativo ? `<button data-inativar="${u.id}">Inativar</button>` : `<button data-reativar="${u.id}">Reativar</button>`}
+          <button data-excluir="${u.id}">Excluir</button>
         </div>
       </div>
     `).join('');
@@ -117,6 +118,9 @@
     tbody.querySelectorAll('[data-reativar]').forEach(btn => {
       btn.addEventListener('click', () => reativarUsuario(btn.dataset.reativar));
     });
+    tbody.querySelectorAll('[data-excluir]').forEach(btn => {
+      btn.addEventListener('click', () => excluirUsuario(btn.dataset.excluir));
+    });
   }
 
   async function inativarUsuario(id) {
@@ -126,6 +130,18 @@
 
   async function reativarUsuario(id) {
     await fetch(`/api/usuarios/${id}/reativar`, { method: 'PATCH' });
+    carregarUsuarios();
+  }
+
+  async function excluirUsuario(id) {
+    if (!confirm('Tem certeza que deseja excluir este usuário? Essa ação não pode ser desfeita.')) return;
+
+    const resp = await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+    if (!resp.ok) {
+      const erro = await resp.json();
+      alert(erro.erro || 'Erro ao excluir usuário.');
+      return;
+    }
     carregarUsuarios();
   }
 

@@ -8,17 +8,16 @@ router.use(requireAuth);
 router.get("/vendas", (req, res) => {
   const vendas = db
     .prepare(
-      `SELECT v.*, c.nome AS cliente_nome, u.nome AS usuario_nome
+      `SELECT v.*, c.nome AS cliente_nome
        FROM vendas v
        LEFT JOIN clientes c ON c.id = v.cliente_id
-       JOIN usuarios u ON u.id = v.usuario_id
        ORDER BY v.criado_em DESC`
     )
     .all();
   res.json(vendas);
 });
 
-const finalizarVenda = db.transaction((itens, clienteId, usuarioId, desconto) => {
+const finalizarVenda = db.transaction((itens, clienteId, usuarioId, usuarioNome, desconto) => {
   const buscarProduto = db.prepare("SELECT * FROM produtos WHERE id = ? AND ativo = 1");
   const atualizarEstoque = db.prepare("UPDATE produtos SET estoque = estoque - ? WHERE id = ?");
   const inserirItem = db.prepare(
@@ -39,8 +38,8 @@ const finalizarVenda = db.transaction((itens, clienteId, usuarioId, desconto) =>
   total = Math.max(0, total - desconto);
 
   const venda = db
-    .prepare("INSERT INTO vendas (cliente_id, usuario_id, desconto, total) VALUES (?, ?, ?, ?)")
-    .run(clienteId, usuarioId, desconto, total);
+    .prepare("INSERT INTO vendas (cliente_id, usuario_id, usuario_nome, desconto, total) VALUES (?, ?, ?, ?, ?)")
+    .run(clienteId, usuarioId, usuarioNome, desconto, total);
 
   for (const item of itens) {
     const produto = buscarProduto.get(item.produto_id);
@@ -59,7 +58,13 @@ router.post("/vendas", (req, res) => {
   }
 
   try {
-    const vendaId = finalizarVenda(itens, cliente_id || null, req.session.usuario.id, desconto || 0);
+    const vendaId = finalizarVenda(
+      itens,
+      cliente_id || null,
+      req.session.usuario.id,
+      req.session.usuario.nome,
+      desconto || 0
+    );
     res.status(201).json({ id: vendaId });
   } catch (erro) {
     res.status(400).json({ erro: erro.message });

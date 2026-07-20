@@ -46,4 +46,16 @@ router.patch("/usuarios/:id/reativar", requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete("/usuarios/:id", requireAdmin, (req, res) => {
+  const id = req.params.id;
+
+  if (Number(id) === req.session.usuario.id) {
+    return res.status(400).json({ erro: "Não é possível excluir o próprio usuário logado." });
+  }
+
+  const resultado = db.prepare("DELETE FROM usuarios WHERE id = ?").run(id);
+  if (resultado.changes === 0) return res.status(404).json({ erro: "Usuário não encontrado." });
+  res.json({ ok: true });
+});
+
 module.exports = router;
