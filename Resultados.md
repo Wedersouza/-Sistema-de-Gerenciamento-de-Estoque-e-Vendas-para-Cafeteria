@@ -30,8 +30,7 @@
 - Exclusão definitiva de usuários com preservação de histórico
 
 ## 5. Principais desafios e dificuldades
-
-- Os protótipos de tela vieram em um formato de ferramenta de design baseada em React, incompatível com a stack definida (JS puro). Foi necessário reescrever as nove telas preservando o visual original.
+- Os protótipos de tela vieram num formato pronto, incompatível com a stack que eu defini, então precisei reescrever as nove telas do zero, preservando o visual original
 - Garantir que a baixa de estoque na venda fosse atômica (tudo-ou-nada), usando transação do SQLite, para não gerar inconsistência entre venda registrada e estoque não descontado.
 - Um bug de controle de acesso: middlewares de proteção (`requireAdmin`) aplicados no nível errado do roteador acabaram bloqueando rotas que deveriam ser acessíveis a qualquer usuário logado. Identificado e corrigido durante os testes.
 - Ajuste de modelagem para permitir excluir um usuário sem perder o histórico de vendas associado a ele, exigindo alteração da estrutura da tabela de vendas.
@@ -39,8 +38,8 @@
 ## 6. Instruções para instalação e execução
 
 npm install
-node src/db/seed.js        # cria um usuário administrador inicial
-node src/db/seed-demo.js   # popula fornecedores, produtos, clientes e vendas de exemplo
+node src/db/seed.js       
+node src/db/seed-demo.js   
 npm start
 
 Acesse `http://localhost:3000/login.html`. O banco de dados é criado a partir de `src/db/schema.sql` (executar em um cliente SQLite, como o DBeaver, antes do primeiro uso). Login padrão do administrador: `admin` / `admin123`.
