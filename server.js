@@ -3,6 +3,7 @@ const path = require("path");
 const sessionMiddleware = require("./src/middlewares/session");
 const produtosRoutes = require("./src/routes/produtos");
 const vendasRoutes = require("./src/routes/vendas");
+const dashboardRoutes = require("./src/routes/dashboard");
 const authRoutes = require("./src/routes/auth");
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(sessionMiddleware);
 app.use("/api", authRoutes);
 app.use("/api", produtosRoutes);
 app.use("/api", vendasRoutes);
+app.use("/api", dashboardRoutes);
 
 const PAGINAS_PROTEGIDAS = [
   "/dashboard.html",

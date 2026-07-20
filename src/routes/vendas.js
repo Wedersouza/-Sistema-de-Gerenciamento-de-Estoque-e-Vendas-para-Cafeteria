@@ -18,8 +18,6 @@ router.get("/vendas", (req, res) => {
   res.json(vendas);
 });
 
-// Transação: confere estoque de todos os itens, só então grava venda + itens
-// e desconta o estoque. Se qualquer parte falhar, nada é salvo (tudo ou nada).
 const finalizarVenda = db.transaction((itens, clienteId, usuarioId, desconto) => {
   const buscarProduto = db.prepare("SELECT * FROM produtos WHERE id = ? AND ativo = 1");
   const atualizarEstoque = db.prepare("UPDATE produtos SET estoque = estoque - ? WHERE id = ?");
