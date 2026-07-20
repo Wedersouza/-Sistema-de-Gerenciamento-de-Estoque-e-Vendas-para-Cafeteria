@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .usuarios-grid { grid-template-columns: 1.3fr 1fr 1.4fr 1fr 100px 90px 120px 90px; }
+  .usuarios-grid { grid-template-columns: 1.3fr 1fr 1.4fr 1fr 100px 90px 120px 150px; }
   .info-perfis {
     display: flex; gap: 20px; background: #FFF7EA; border: 1px solid rgba(199,123,59,0.25);
     border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; font-size: 12.5px; color: var(--color-text-secondary);
@@ -43,7 +43,7 @@
 
   <div class="modal-overlay" id="modal-usuario" style="display:none;">
     <div class="modal" style="width:440px;">
-      <div class="modal-title">Novo Usuário</div>
+      <div class="modal-title" id="modal-usuario-titulo">Novo Usuário</div>
       <form id="form-usuario">
         <div style="display:flex;flex-direction:column;gap:14px;">
           <label class="field">
@@ -62,7 +62,7 @@
               </select>
             </label>
           </div>
-          <label class="field">
+          <label class="field" id="campo-senha">
             <span>Senha inicial</span>
             <input type="password" name="senha" placeholder="••••••••" required>
           </label>
@@ -106,6 +106,7 @@
         <div><span class="pill pill-sm ${u.ativo ? 'pill-success' : 'pill-neutral'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div style="color:var(--color-text-muted);font-size:12.5px;">${u.ultimo_acesso || '—'}</div>
         <div class="table-actions">
+          <button data-editar="${u.id}">Editar</button>
           ${u.ativo ? `<button data-inativar="${u.id}">Inativar</button>` : `<button data-reativar="${u.id}">Reativar</button>`}
           <button data-excluir="${u.id}">Excluir</button>
         </div>
@@ -120,6 +121,9 @@
     });
     tbody.querySelectorAll('[data-excluir]').forEach(btn => {
       btn.addEventListener('click', () => excluirUsuario(btn.dataset.excluir));
+    });
+    tbody.querySelectorAll('[data-editar]').forEach(btn => {
+      btn.addEventListener('click', () => abrirEdicao(btn.dataset.editar));
     });
   }
 
@@ -145,8 +149,37 @@
     carregarUsuarios();
   }
 
+  let editandoId = null;
   const modal = document.getElementById('modal-usuario');
-  document.getElementById('btn-novo-usuario').addEventListener('click', () => modal.style.display = 'flex');
+  const modalTitulo = document.getElementById('modal-usuario-titulo');
+  const campoSenha = document.getElementById('campo-senha');
+  const form = document.getElementById('form-usuario');
+
+  document.getElementById('btn-novo-usuario').addEventListener('click', () => {
+    editandoId = null;
+    modalTitulo.textContent = 'Novo Usuário';
+    form.reset();
+    form.login.disabled = false;
+    campoSenha.style.display = '';
+    form.senha.required = true;
+    modal.style.display = 'flex';
+  });
+
+  function abrirEdicao(id) {
+    const usuario = USERS.find(u => u.id == id);
+    editandoId = id;
+    modalTitulo.textContent = 'Editar Usuário';
+    form.nome.value = usuario.nome;
+    form.login.value = usuario.login;
+    form.login.disabled = true;
+    form.perfil.value = usuario.perfil === 'Administrador' ? 'Administrador' : 'Funcionário';
+    form.email.value = usuario.email || '';
+    form.telefone.value = usuario.telefone || '';
+    campoSenha.style.display = 'none';
+    form.senha.required = false;
+    modal.style.display = 'flex';
+  }
+
   document.getElementById('btn-cancelar-usuario').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
@@ -154,18 +187,29 @@
     e.preventDefault();
     const dados = new FormData(e.target);
 
-    const resp = await fetch('/api/usuarios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome: dados.get('nome'),
-        login: dados.get('login'),
-        senha: dados.get('senha'),
-        email: dados.get('email'),
-        telefone: dados.get('telefone'),
-        perfil: dados.get('perfil'),
-      }),
-    });
+    const resp = editandoId
+      ? await fetch(`/api/usuarios/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: dados.get('nome'),
+            email: dados.get('email'),
+            telefone: dados.get('telefone'),
+            perfil: dados.get('perfil'),
+          }),
+        })
+      : await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: dados.get('nome'),
+            login: dados.get('login'),
+            senha: dados.get('senha'),
+            email: dados.get('email'),
+            telefone: dados.get('telefone'),
+            perfil: dados.get('perfil'),
+          }),
+        });
 
     if (!resp.ok) {
       const erro = await resp.json();
@@ -173,6 +217,7 @@
       return;
     }
 
+    form.login.disabled = false;
     e.target.reset();
     modal.style.display = 'none';
     carregarUsuarios();

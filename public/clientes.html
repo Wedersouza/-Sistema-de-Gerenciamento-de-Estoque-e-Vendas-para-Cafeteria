@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .clientes-grid { grid-template-columns: 1.4fr 1fr 1.4fr 1.6fr 100px 90px; }
+  .clientes-grid { grid-template-columns: 1.4fr 1fr 1.4fr 1.6fr 100px 150px; }
 </style>
 </head>
 <body data-page="clientes">
@@ -29,14 +29,13 @@
       <div class="table-head-row clientes-grid">
         <div>NOME</div><div>TELEFONE</div><div>E-MAIL</div><div>ENDEREÇO</div><div>STATUS</div><div>AÇÕES</div>
       </div>
-      <!-- TODO (Etapa 7 - Clientes/Fornecedores): substituir por GET /api/clientes -->
       <div id="clientes-tbody"></div>
     </div>
   </div>
 
   <div class="modal-overlay" id="modal-cliente" style="display:none;">
     <div class="modal" style="width:440px;">
-      <div class="modal-title">Novo Cliente</div>
+      <div class="modal-title" id="modal-cliente-titulo">Novo Cliente</div>
       <form id="form-cliente">
         <div style="display:flex;flex-direction:column;gap:14px;">
           <label class="field">
@@ -97,6 +96,7 @@
         <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.endereco || '—'}</div>
         <div><span class="pill pill-sm ${c.ativo ? 'pill-success' : 'pill-neutral'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div class="table-actions">
+          <button data-editar="${c.id}">Editar</button>
           ${c.ativo ? `<button data-inativar="${c.id}">Inativar</button>` : `<button data-reativar="${c.id}">Reativar</button>`}
         </div>
       </div>
@@ -107,6 +107,9 @@
     });
     tbody.querySelectorAll('[data-reativar]').forEach(btn => {
       btn.addEventListener('click', () => reativarCliente(btn.dataset.reativar));
+    });
+    tbody.querySelectorAll('[data-editar]').forEach(btn => {
+      btn.addEventListener('click', () => abrirEdicao(btn.dataset.editar));
     });
   }
 
@@ -122,8 +125,29 @@
 
   buscaInput.addEventListener('input', renderClientes);
 
+  let editandoId = null;
   const modal = document.getElementById('modal-cliente');
-  document.getElementById('btn-novo-cliente').addEventListener('click', () => modal.style.display = 'flex');
+  const modalTitulo = document.getElementById('modal-cliente-titulo');
+  const form = document.getElementById('form-cliente');
+
+  document.getElementById('btn-novo-cliente').addEventListener('click', () => {
+    editandoId = null;
+    modalTitulo.textContent = 'Novo Cliente';
+    form.reset();
+    modal.style.display = 'flex';
+  });
+
+  function abrirEdicao(id) {
+    const cliente = CLIENTS.find(c => c.id == id);
+    editandoId = id;
+    modalTitulo.textContent = 'Editar Cliente';
+    form.nome.value = cliente.nome;
+    form.telefone.value = cliente.telefone || '';
+    form.email.value = cliente.email || '';
+    form.endereco.value = cliente.endereco || '';
+    modal.style.display = 'flex';
+  }
+
   document.getElementById('btn-cancelar-cliente').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
@@ -131,16 +155,24 @@
     e.preventDefault();
     const dados = new FormData(e.target);
 
-    const resp = await fetch('/api/clientes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome: dados.get('nome'),
-        telefone: dados.get('telefone'),
-        email: dados.get('email'),
-        endereco: dados.get('endereco'),
-      }),
-    });
+    const corpo = {
+      nome: dados.get('nome'),
+      telefone: dados.get('telefone'),
+      email: dados.get('email'),
+      endereco: dados.get('endereco'),
+    };
+
+    const resp = editandoId
+      ? await fetch(`/api/clientes/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        })
+      : await fetch('/api/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        });
 
     if (!resp.ok) {
       const erro = await resp.json();

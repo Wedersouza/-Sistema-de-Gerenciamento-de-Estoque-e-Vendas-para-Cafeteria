@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .produtos-grid { grid-template-columns: 90px 2fr 1.1fr 1.3fr 90px 110px 90px 110px; }
+  .produtos-grid { grid-template-columns: 90px 2fr 1.1fr 1.3fr 90px 110px 90px 150px; }
 </style>
 </head>
 <body data-page="produtos">
@@ -44,7 +44,7 @@
 
   <div class="modal-overlay" id="modal-produto" style="display:none;">
     <div class="modal">
-      <div class="modal-title">Novo Produto</div>
+      <div class="modal-title" id="modal-produto-titulo">Novo Produto</div>
       <form id="form-produto">
         <div class="field-grid">
           <label class="field field-full">
@@ -140,6 +140,7 @@
           <div><span class="pill ${baixo ? 'pill-danger' : 'pill-success'}">${p.estoque} un.</span></div>
           <div><span class="pill pill-sm ${p.ativo ? 'pill-success' : 'pill-neutral'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></div>
           <div class="table-actions">
+            <button data-editar="${p.id}">Editar</button>
             ${p.ativo ? `<button data-inativar="${p.id}">Inativar</button>` : `<button data-reativar="${p.id}">Reativar</button>`}
           </div>
         </div>
@@ -151,6 +152,9 @@
     });
     tbody.querySelectorAll('[data-reativar]').forEach(btn => {
       btn.addEventListener('click', () => reativarProduto(btn.dataset.reativar));
+    });
+    tbody.querySelectorAll('[data-editar]').forEach(btn => {
+      btn.addEventListener('click', () => abrirEdicao(btn.dataset.editar));
     });
   }
 
@@ -167,8 +171,34 @@
   buscaInput.addEventListener('input', renderProdutos);
   categoriaSelect.addEventListener('change', renderProdutos);
 
+  let editandoId = null;
   const modal = document.getElementById('modal-produto');
-  document.getElementById('btn-novo-produto').addEventListener('click', () => modal.style.display = 'flex');
+  const modalTitulo = document.getElementById('modal-produto-titulo');
+  const form = document.getElementById('form-produto');
+
+  document.getElementById('btn-novo-produto').addEventListener('click', () => {
+    editandoId = null;
+    modalTitulo.textContent = 'Novo Produto';
+    form.reset();
+    form.sku.disabled = false;
+    modal.style.display = 'flex';
+  });
+
+  function abrirEdicao(id) {
+    const produto = PRODUCTS.find(p => p.id == id);
+    editandoId = id;
+    modalTitulo.textContent = 'Editar Produto';
+    form.nome.value = produto.nome;
+    form.sku.value = produto.sku;
+    form.sku.disabled = true;
+    form.categoria.value = produto.categoria || 'Bebidas';
+    form.fornecedor_id.value = produto.fornecedor_id || '';
+    form.preco.value = produto.preco;
+    form.estoque.value = produto.estoque;
+    form.estoqueMinimo.value = produto.estoque_minimo;
+    modal.style.display = 'flex';
+  }
+
   document.getElementById('btn-cancelar-produto').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
@@ -178,19 +208,27 @@
 
     const preco = parseFloat((dados.get('preco') || '0').replace(/[^\d,\.]/g, '').replace(',', '.')) || 0;
 
-    const resp = await fetch('/api/produtos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sku: dados.get('sku'),
-        nome: dados.get('nome'),
-        categoria: dados.get('categoria'),
-        fornecedor_id: dados.get('fornecedor_id') || null,
-        preco,
-        estoque: parseInt(dados.get('estoque')) || 0,
-        estoque_minimo: parseInt(dados.get('estoqueMinimo')) || 0,
-      }),
-    });
+    const corpo = {
+      sku: dados.get('sku'),
+      nome: dados.get('nome'),
+      categoria: dados.get('categoria'),
+      fornecedor_id: dados.get('fornecedor_id') || null,
+      preco,
+      estoque: parseInt(dados.get('estoque')) || 0,
+      estoque_minimo: parseInt(dados.get('estoqueMinimo')) || 0,
+    };
+
+    const resp = editandoId
+      ? await fetch(`/api/produtos/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        })
+      : await fetch('/api/produtos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        });
 
     if (!resp.ok) {
       const erro = await resp.json();
@@ -198,6 +236,7 @@
       return;
     }
 
+    form.sku.disabled = false;
     e.target.reset();
     modal.style.display = 'none';
     carregarProdutos();

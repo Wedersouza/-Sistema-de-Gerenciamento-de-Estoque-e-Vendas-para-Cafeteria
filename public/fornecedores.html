@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .fornecedores-grid { grid-template-columns: 1.4fr 1.6fr 1.1fr 1fr 1.6fr 90px 90px; }
+  .fornecedores-grid { grid-template-columns: 1.4fr 1.6fr 1.1fr 1fr 1.6fr 90px 150px; }
 </style>
 </head>
 <body data-page="fornecedores">
@@ -29,14 +29,13 @@
       <div class="table-head-row fornecedores-grid">
         <div>NOME FANTASIA</div><div>RAZÃO SOCIAL</div><div>CNPJ</div><div>TELEFONE</div><div>ENDEREÇO</div><div>STATUS</div><div>AÇÕES</div>
       </div>
-      <!-- TODO (Etapa 7 - Clientes/Fornecedores): substituir por GET /api/fornecedores -->
       <div id="fornecedores-tbody"></div>
     </div>
   </div>
 
   <div class="modal-overlay" id="modal-fornecedor" style="display:none;">
     <div class="modal" style="width:460px;">
-      <div class="modal-title">Novo Fornecedor</div>
+      <div class="modal-title" id="modal-fornecedor-titulo">Novo Fornecedor</div>
       <form id="form-fornecedor">
         <div style="display:flex;flex-direction:column;gap:14px;">
           <label class="field">
@@ -104,6 +103,7 @@
         <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.endereco || '—'}</div>
         <div><span class="pill pill-sm ${f.ativo ? 'pill-success' : 'pill-neutral'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div class="table-actions">
+          <button data-editar="${f.id}">Editar</button>
           ${f.ativo ? `<button data-inativar="${f.id}">Inativar</button>` : `<button data-reativar="${f.id}">Reativar</button>`}
         </div>
       </div>
@@ -114,6 +114,9 @@
     });
     tbody.querySelectorAll('[data-reativar]').forEach(btn => {
       btn.addEventListener('click', () => reativarFornecedor(btn.dataset.reativar));
+    });
+    tbody.querySelectorAll('[data-editar]').forEach(btn => {
+      btn.addEventListener('click', () => abrirEdicao(btn.dataset.editar));
     });
   }
 
@@ -129,8 +132,30 @@
 
   buscaInput.addEventListener('input', renderFornecedores);
 
+  let editandoId = null;
   const modal = document.getElementById('modal-fornecedor');
-  document.getElementById('btn-novo-fornecedor').addEventListener('click', () => modal.style.display = 'flex');
+  const modalTitulo = document.getElementById('modal-fornecedor-titulo');
+  const form = document.getElementById('form-fornecedor');
+
+  document.getElementById('btn-novo-fornecedor').addEventListener('click', () => {
+    editandoId = null;
+    modalTitulo.textContent = 'Novo Fornecedor';
+    form.reset();
+    modal.style.display = 'flex';
+  });
+
+  function abrirEdicao(id) {
+    const fornecedor = SUPPLIERS.find(f => f.id == id);
+    editandoId = id;
+    modalTitulo.textContent = 'Editar Fornecedor';
+    form.fantasia.value = fornecedor.nome_fantasia;
+    form.razao.value = fornecedor.razao_social || '';
+    form.cnpj.value = fornecedor.cnpj || '';
+    form.telefone.value = fornecedor.telefone || '';
+    form.endereco.value = fornecedor.endereco || '';
+    modal.style.display = 'flex';
+  }
+
   document.getElementById('btn-cancelar-fornecedor').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
@@ -138,17 +163,25 @@
     e.preventDefault();
     const dados = new FormData(e.target);
 
-    const resp = await fetch('/api/fornecedores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome_fantasia: dados.get('fantasia'),
-        razao_social: dados.get('razao'),
-        cnpj: dados.get('cnpj'),
-        telefone: dados.get('telefone'),
-        endereco: dados.get('endereco'),
-      }),
-    });
+    const corpo = {
+      nome_fantasia: dados.get('fantasia'),
+      razao_social: dados.get('razao'),
+      cnpj: dados.get('cnpj'),
+      telefone: dados.get('telefone'),
+      endereco: dados.get('endereco'),
+    };
+
+    const resp = editandoId
+      ? await fetch(`/api/fornecedores/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        })
+      : await fetch('/api/fornecedores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpo),
+        });
 
     if (!resp.ok) {
       const erro = await resp.json();

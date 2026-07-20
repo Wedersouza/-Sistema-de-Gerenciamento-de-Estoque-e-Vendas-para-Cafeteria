@@ -20,6 +20,18 @@ router.post("/clientes", (req, res) => {
   res.status(201).json({ id: resultado.lastInsertRowid });
 });
 
+router.put("/clientes/:id", (req, res) => {
+  const { nome, telefone, email, endereco } = req.body;
+  if (!nome) return res.status(400).json({ erro: "Nome é obrigatório." });
+
+  const resultado = db
+    .prepare("UPDATE clientes SET nome = ?, telefone = ?, email = ?, endereco = ? WHERE id = ?")
+    .run(nome, telefone || null, email || null, endereco || null, req.params.id);
+
+  if (resultado.changes === 0) return res.status(404).json({ erro: "Cliente não encontrado." });
+  res.json({ ok: true });
+});
+
 router.patch("/clientes/:id/inativar", (req, res) => {
   const resultado = db.prepare("UPDATE clientes SET ativo = 0 WHERE id = ?").run(req.params.id);
   if (resultado.changes === 0) return res.status(404).json({ erro: "Cliente não encontrado." });
