@@ -42,4 +42,25 @@ router.post("/logout", (req, res) => {
   });
 });
 
+router.post("/cadastro", (req, res) => {
+  const { nome, email, telefone, login, senha } = req.body;
+
+  if (!nome || !login || !senha) {
+    return res.status(400).json({ erro: "Nome, login e senha são obrigatórios." });
+  }
+
+  const jaExiste = db.prepare("SELECT id FROM usuarios WHERE login = ?").get(login);
+  if (jaExiste) return res.status(409).json({ erro: "Login já está em uso." });
+
+  const senhaHash = bcrypt.hashSync(senha, 10);
+  const resultado = db
+    .prepare(
+      `INSERT INTO usuarios (nome, login, senha_hash, email, telefone, perfil, ativo)
+       VALUES (?, ?, ?, ?, ?, 'Funcionario', 1)`
+    )
+    .run(nome, login, senhaHash, email || null, telefone || null);
+
+  res.status(201).json({ id: resultado.lastInsertRowid });
+});
+
 module.exports = router;

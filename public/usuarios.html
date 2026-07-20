@@ -83,45 +83,75 @@
 
 <script src="js/partials.js"></script>
 <script>
-  // Dados de exemplo — serão substituídos por chamadas reais à API na Etapa 8.
-  // Regra já definida: só um Administrador pode promover outro usuário a Administrador
-  // (o select de Perfil acima é só visual por enquanto; a regra será aplicada no back-end).
-  const USERS = [
-    { nome: 'Camila Alves', login: 'camila.alves', email: 'camila@torracafe.com', telefone: '(11) 98111-2233', perfil: 'Administrador', ativo: true, ultimoAcesso: 'Hoje, 09:12' },
-    { nome: 'João Silva', login: 'joao.silva', email: 'joao@torracafe.com', telefone: '(11) 97222-3344', perfil: 'Funcionário', ativo: true, ultimoAcesso: 'Hoje, 08:47' },
-    { nome: 'Fernanda Reis', login: 'fernanda.reis', email: 'fernanda@torracafe.com', telefone: '(11) 96333-4455', perfil: 'Funcionário', ativo: true, ultimoAcesso: 'Ontem, 18:30' },
-    { nome: 'Lucas Prado', login: 'lucas.prado', email: 'lucas@torracafe.com', telefone: '(11) 95444-5566', perfil: 'Funcionário', ativo: false, ultimoAcesso: '12/06/2026' },
-  ];
-
+  let USERS = [];
   const tbody = document.getElementById('usuarios-tbody');
+
+  async function carregarUsuarios() {
+    const resp = await fetch('/api/usuarios');
+    USERS = await resp.json();
+    renderUsuarios();
+  }
 
   function renderUsuarios() {
     tbody.innerHTML = USERS.map(u => `
       <div class="table-row usuarios-grid">
         <div style="font-weight:600;">${u.nome}</div>
         <div style="color:var(--color-text-secondary);">${u.login}</div>
-        <div style="color:var(--color-text-secondary);">${u.email}</div>
-        <div style="color:var(--color-text-secondary);">${u.telefone}</div>
+        <div style="color:var(--color-text-secondary);">${u.email || '—'}</div>
+        <div style="color:var(--color-text-secondary);">${u.telefone || '—'}</div>
         <div><span class="pill pill-sm ${u.perfil === 'Administrador' ? 'pill-accent' : 'pill-neutral'}">${u.perfil}</span></div>
         <div><span class="pill pill-sm ${u.ativo ? 'pill-success' : 'pill-neutral'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></div>
-        <div style="color:var(--color-text-muted);font-size:12.5px;">${u.ultimoAcesso}</div>
-        <div class="table-actions"><a href="#">Editar</a></div>
+        <div style="color:var(--color-text-muted);font-size:12.5px;">${u.ultimo_acesso || '—'}</div>
+        <div class="table-actions">
+          ${u.ativo ? `<button data-inativar="${u.id}">Inativar</button>` : ''}
+        </div>
       </div>
     `).join('');
+
+    tbody.querySelectorAll('[data-inativar]').forEach(btn => {
+      btn.addEventListener('click', () => inativarUsuario(btn.dataset.inativar));
+    });
   }
 
-  renderUsuarios();
+  async function inativarUsuario(id) {
+    await fetch(`/api/usuarios/${id}/inativar`, { method: 'PATCH' });
+    carregarUsuarios();
+  }
 
   const modal = document.getElementById('modal-usuario');
   document.getElementById('btn-novo-usuario').addEventListener('click', () => modal.style.display = 'flex');
   document.getElementById('btn-cancelar-usuario').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
-  // TODO (Etapa 8 - Usuários/Perfil): substituir por POST real para /api/usuarios.
-  document.getElementById('form-usuario').addEventListener('submit', (e) => {
+  document.getElementById('form-usuario').addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('Salvar usuário ainda não implementado — aguardando Etapa 8.');
+    const dados = new FormData(e.target);
+
+    const resp = await fetch('/api/usuarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: dados.get('nome'),
+        login: dados.get('login'),
+        senha: '123456',
+        email: dados.get('email'),
+        telefone: dados.get('telefone'),
+        perfil: dados.get('perfil'),
+      }),
+    });
+
+    if (!resp.ok) {
+      const erro = await resp.json();
+      alert(erro.erro || 'Erro ao salvar usuário.');
+      return;
+    }
+
+    e.target.reset();
+    modal.style.display = 'none';
+    carregarUsuarios();
   });
+
+  carregarUsuarios();
 </script>
 </body>
 </html>

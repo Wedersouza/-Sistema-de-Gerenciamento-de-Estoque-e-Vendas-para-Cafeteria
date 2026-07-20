@@ -67,23 +67,21 @@
 
 <script src="js/partials.js"></script>
 <script>
-  // Dados de exemplo — serão substituídos por chamadas reais à API na Etapa 7.
-  const CLIENTS = [
-    { nome: 'Marina Costa', telefone: '(11) 98211-4432', email: 'marina.costa@email.com', endereco: 'Rua das Acácias, 120', ativo: true },
-    { nome: 'Pedro Nogueira', telefone: '(11) 97744-2210', email: 'pedro.n@email.com', endereco: 'Av. Brasil, 900', ativo: true },
-    { nome: 'Beatriz Lima', telefone: '(11) 96633-8871', email: 'bia.lima@email.com', endereco: 'Rua Sete de Setembro, 45', ativo: true },
-    { nome: 'Rafael Torres', telefone: '(11) 95522-1190', email: 'rafael.torres@email.com', endereco: 'Rua dos Ipês, 310', ativo: false },
-    { nome: 'Juliana Prado', telefone: '(11) 99887-6541', email: 'ju.prado@email.com', endereco: 'Alameda Santos, 78', ativo: true },
-    { nome: 'Carlos Menezes', telefone: '(11) 94433-2287', email: 'carlos.mz@email.com', endereco: 'Rua Bela Vista, 512', ativo: true },
-  ];
+  let CLIENTS = [];
 
   const buscaInput = document.getElementById('filtro-busca');
   const tbody = document.getElementById('clientes-tbody');
 
+  async function carregarClientes() {
+    const resp = await fetch('/api/clientes');
+    CLIENTS = await resp.json();
+    renderClientes();
+  }
+
   function renderClientes() {
     const q = buscaInput.value.toLowerCase();
     const filtrados = CLIENTS.filter(c =>
-      !q || c.nome.toLowerCase().includes(q) || c.telefone.includes(q) || c.email.toLowerCase().includes(q)
+      !q || c.nome.toLowerCase().includes(q) || (c.telefone || '').includes(q) || (c.email || '').toLowerCase().includes(q)
     );
 
     if (filtrados.length === 0) {
@@ -94,28 +92,60 @@
     tbody.innerHTML = filtrados.map(c => `
       <div class="table-row clientes-grid">
         <div style="font-weight:600;">${c.nome}</div>
-        <div style="color:var(--color-text-secondary);">${c.telefone}</div>
-        <div style="color:var(--color-text-secondary);">${c.email}</div>
-        <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.endereco}</div>
+        <div style="color:var(--color-text-secondary);">${c.telefone || '—'}</div>
+        <div style="color:var(--color-text-secondary);">${c.email || '—'}</div>
+        <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.endereco || '—'}</div>
         <div><span class="pill pill-sm ${c.ativo ? 'pill-success' : 'pill-neutral'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></div>
-        <div class="table-actions"><a href="#">Editar</a></div>
+        <div class="table-actions">
+          ${c.ativo ? `<button data-inativar="${c.id}">Inativar</button>` : ''}
+        </div>
       </div>
     `).join('');
+
+    tbody.querySelectorAll('[data-inativar]').forEach(btn => {
+      btn.addEventListener('click', () => inativarCliente(btn.dataset.inativar));
+    });
+  }
+
+  async function inativarCliente(id) {
+    await fetch(`/api/clientes/${id}/inativar`, { method: 'PATCH' });
+    carregarClientes();
   }
 
   buscaInput.addEventListener('input', renderClientes);
-  renderClientes();
 
   const modal = document.getElementById('modal-cliente');
   document.getElementById('btn-novo-cliente').addEventListener('click', () => modal.style.display = 'flex');
   document.getElementById('btn-cancelar-cliente').addEventListener('click', () => modal.style.display = 'none');
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
-  // TODO (Etapa 7 - Clientes/Fornecedores): substituir por POST real para /api/clientes.
-  document.getElementById('form-cliente').addEventListener('submit', (e) => {
+  document.getElementById('form-cliente').addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('Salvar cliente ainda não implementado — aguardando Etapa 7.');
+    const dados = new FormData(e.target);
+
+    const resp = await fetch('/api/clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: dados.get('nome'),
+        telefone: dados.get('telefone'),
+        email: dados.get('email'),
+        endereco: dados.get('endereco'),
+      }),
+    });
+
+    if (!resp.ok) {
+      const erro = await resp.json();
+      alert(erro.erro || 'Erro ao salvar cliente.');
+      return;
+    }
+
+    e.target.reset();
+    modal.style.display = 'none';
+    carregarClientes();
   });
+
+  carregarClientes();
 </script>
 </body>
 </html>

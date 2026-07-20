@@ -4,7 +4,12 @@ const sessionMiddleware = require("./src/middlewares/session");
 const produtosRoutes = require("./src/routes/produtos");
 const vendasRoutes = require("./src/routes/vendas");
 const dashboardRoutes = require("./src/routes/dashboard");
+const clientesRoutes = require("./src/routes/clientes");
+const fornecedoresRoutes = require("./src/routes/fornecedores");
+const usuariosRoutes = require("./src/routes/usuarios");
+const meRoutes = require("./src/routes/me");
 const authRoutes = require("./src/routes/auth");
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +21,10 @@ app.use("/api", authRoutes);
 app.use("/api", produtosRoutes);
 app.use("/api", vendasRoutes);
 app.use("/api", dashboardRoutes);
+app.use("/api", clientesRoutes);
+app.use("/api", fornecedoresRoutes);
+app.use("/api", usuariosRoutes);
+app.use("/api", meRoutes);
 
 const PAGINAS_PROTEGIDAS = [
   "/dashboard.html",

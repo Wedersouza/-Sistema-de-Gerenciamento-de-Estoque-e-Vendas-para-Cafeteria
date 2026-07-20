@@ -137,11 +137,43 @@
 </div>
 
 <script>
-  // TODO (Etapa 8 - Usuários e Perfil): substituir por POST real para /api/usuarios.
-  // Regra de negócio já definida: todo autocadastro entra como Funcionário.
-  document.getElementById("cadastro-form").addEventListener("submit", (e) => {
+  document.getElementById("cadastro-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    console.log("Cadastro ainda não implementado — aguardando Etapa 8.");
+
+    const errorBox = document.getElementById("cadastro-error");
+    errorBox.style.display = "none";
+
+    const dados = new FormData(e.target);
+    const senha = dados.get("senha");
+    const confirmarSenha = dados.get("confirmarSenha");
+
+    if (senha !== confirmarSenha) {
+      errorBox.textContent = "As senhas não coincidem.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    const resp = await fetch("/api/cadastro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: dados.get("nome"),
+        email: dados.get("email"),
+        telefone: dados.get("telefone"),
+        login: dados.get("login"),
+        senha,
+      }),
+    });
+
+    const resultado = await resp.json();
+
+    if (!resp.ok) {
+      errorBox.textContent = resultado.erro || "Não foi possível criar a conta.";
+      errorBox.style.display = "block";
+      return;
+    }
+
+    window.location.href = "login.html";
   });
 </script>
 </body>
