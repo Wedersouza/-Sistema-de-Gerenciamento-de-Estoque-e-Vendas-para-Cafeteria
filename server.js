@@ -36,9 +36,14 @@ const PAGINAS_PROTEGIDAS = [
   "/meu-perfil.html",
 ];
 
+const PAGINAS_SO_ADMIN = ["/fornecedores.html", "/usuarios.html"];
+
 app.use((req, res, next) => {
   if (PAGINAS_PROTEGIDAS.includes(req.path) && !req.session.usuario) {
     return res.redirect("/login.html");
+  }
+  if (PAGINAS_SO_ADMIN.includes(req.path) && req.session.usuario?.perfil !== "Administrador") {
+    return res.redirect("/dashboard.html");
   }
   next();
 });

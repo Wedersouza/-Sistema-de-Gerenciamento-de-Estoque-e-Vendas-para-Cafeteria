@@ -1,11 +1,3 @@
-/**
- * Injeta o partial do sidebar em qualquer página que tenha
- * <div id="sidebar-container"></div> e <body data-page="...">.
- *
- * A busca de nome/perfil do usuário logado e a restrição de links
- * (Fornecedores/Usuários = só Administrador) ainda não estão implementadas
- * aqui — dependem da sessão, que será construída na Etapa 3 (Autenticação).
- */
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("sidebar-container");
   if (!container) return;
@@ -23,4 +15,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     await fetch("/api/logout", { method: "POST" });
     window.location.href = "/login.html";
   });
+
+  const respUsuario = await fetch("/api/me");
+  if (respUsuario.ok) {
+    const usuario = await respUsuario.json();
+    container.querySelector("#sidebar-user-name").textContent = usuario.nome;
+    container.querySelector("#sidebar-user-role").textContent = usuario.perfil;
+    container.querySelector("#sidebar-user-initials").textContent = usuario.nome.slice(0, 2).toUpperCase();
+
+    if (usuario.perfil !== "Administrador") {
+      container.querySelectorAll('[data-restricted="admin"]').forEach(el => el.remove());
+    }
+  }
 });

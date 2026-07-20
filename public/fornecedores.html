@@ -104,7 +104,7 @@
         <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.endereco || '—'}</div>
         <div><span class="pill pill-sm ${f.ativo ? 'pill-success' : 'pill-neutral'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div class="table-actions">
-          ${f.ativo ? `<button data-inativar="${f.id}">Inativar</button>` : ''}
+          ${f.ativo ? `<button data-inativar="${f.id}">Inativar</button>` : `<button data-reativar="${f.id}">Reativar</button>`}
         </div>
       </div>
     `).join('');
@@ -112,10 +112,18 @@
     tbody.querySelectorAll('[data-inativar]').forEach(btn => {
       btn.addEventListener('click', () => inativarFornecedor(btn.dataset.inativar));
     });
+    tbody.querySelectorAll('[data-reativar]').forEach(btn => {
+      btn.addEventListener('click', () => reativarFornecedor(btn.dataset.reativar));
+    });
   }
 
   async function inativarFornecedor(id) {
     await fetch(`/api/fornecedores/${id}/inativar`, { method: 'PATCH' });
+    carregarFornecedores();
+  }
+
+  async function reativarFornecedor(id) {
+    await fetch(`/api/fornecedores/${id}/reativar`, { method: 'PATCH' });
     carregarFornecedores();
   }
 

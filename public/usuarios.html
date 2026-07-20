@@ -37,7 +37,6 @@
       <div class="table-head-row usuarios-grid">
         <div>NOME</div><div>LOGIN</div><div>E-MAIL</div><div>TELEFONE</div><div>PERFIL</div><div>STATUS</div><div>ÚLTIMO ACESSO</div><div>AÇÕES</div>
       </div>
-      <!-- TODO (Etapa 8 - Usuários/Perfil): substituir por GET /api/usuarios -->
       <div id="usuarios-tbody"></div>
     </div>
   </div>
@@ -63,6 +62,10 @@
               </select>
             </label>
           </div>
+          <label class="field">
+            <span>Senha inicial</span>
+            <input type="password" name="senha" placeholder="••••••••" required>
+          </label>
           <label class="field">
             <span>E-mail</span>
             <input type="email" name="email" placeholder="joao.silva@torracafe.com">
@@ -103,7 +106,7 @@
         <div><span class="pill pill-sm ${u.ativo ? 'pill-success' : 'pill-neutral'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div style="color:var(--color-text-muted);font-size:12.5px;">${u.ultimo_acesso || '—'}</div>
         <div class="table-actions">
-          ${u.ativo ? `<button data-inativar="${u.id}">Inativar</button>` : ''}
+          ${u.ativo ? `<button data-inativar="${u.id}">Inativar</button>` : `<button data-reativar="${u.id}">Reativar</button>`}
         </div>
       </div>
     `).join('');
@@ -111,10 +114,18 @@
     tbody.querySelectorAll('[data-inativar]').forEach(btn => {
       btn.addEventListener('click', () => inativarUsuario(btn.dataset.inativar));
     });
+    tbody.querySelectorAll('[data-reativar]').forEach(btn => {
+      btn.addEventListener('click', () => reativarUsuario(btn.dataset.reativar));
+    });
   }
 
   async function inativarUsuario(id) {
     await fetch(`/api/usuarios/${id}/inativar`, { method: 'PATCH' });
+    carregarUsuarios();
+  }
+
+  async function reativarUsuario(id) {
+    await fetch(`/api/usuarios/${id}/reativar`, { method: 'PATCH' });
     carregarUsuarios();
   }
 
@@ -133,7 +144,7 @@
       body: JSON.stringify({
         nome: dados.get('nome'),
         login: dados.get('login'),
-        senha: '123456',
+        senha: dados.get('senha'),
         email: dados.get('email'),
         telefone: dados.get('telefone'),
         perfil: dados.get('perfil'),

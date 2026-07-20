@@ -97,7 +97,7 @@
         <div style="color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.endereco || '—'}</div>
         <div><span class="pill pill-sm ${c.ativo ? 'pill-success' : 'pill-neutral'}">${c.ativo ? 'Ativo' : 'Inativo'}</span></div>
         <div class="table-actions">
-          ${c.ativo ? `<button data-inativar="${c.id}">Inativar</button>` : ''}
+          ${c.ativo ? `<button data-inativar="${c.id}">Inativar</button>` : `<button data-reativar="${c.id}">Reativar</button>`}
         </div>
       </div>
     `).join('');
@@ -105,10 +105,18 @@
     tbody.querySelectorAll('[data-inativar]').forEach(btn => {
       btn.addEventListener('click', () => inativarCliente(btn.dataset.inativar));
     });
+    tbody.querySelectorAll('[data-reativar]').forEach(btn => {
+      btn.addEventListener('click', () => reativarCliente(btn.dataset.reativar));
+    });
   }
 
   async function inativarCliente(id) {
     await fetch(`/api/clientes/${id}/inativar`, { method: 'PATCH' });
+    carregarClientes();
+  }
+
+  async function reativarCliente(id) {
+    await fetch(`/api/clientes/${id}/reativar`, { method: 'PATCH' });
     carregarClientes();
   }
 

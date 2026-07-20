@@ -26,4 +26,9 @@ router.patch("/clientes/:id/inativar", (req, res) => {
   res.json({ ok: true });
 });
 
+router.patch("/clientes/:id/reativar", (req, res) => {
+  db.prepare("UPDATE clientes SET ativo = 1 WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
 module.exports = router;

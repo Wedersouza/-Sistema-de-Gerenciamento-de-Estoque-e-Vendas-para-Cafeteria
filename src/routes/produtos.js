@@ -58,13 +58,17 @@ router.put("/produtos/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// Soft delete — regra já definida: nunca excluir de fato, só inativar.
 router.patch("/produtos/:id/inativar", (req, res) => {
   const resultado = db.prepare("UPDATE produtos SET ativo = 0 WHERE id = ?").run(req.params.id);
 
   if (resultado.changes === 0) {
     return res.status(404).json({ erro: "Produto não encontrado." });
   }
+  res.json({ ok: true });
+});
+
+router.patch("/produtos/:id/reativar", (req, res) => {
+  db.prepare("UPDATE produtos SET ativo = 1 WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
 

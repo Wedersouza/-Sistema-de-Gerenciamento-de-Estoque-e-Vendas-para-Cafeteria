@@ -38,7 +38,6 @@
       <div class="table-head-row produtos-grid">
         <div>SKU</div><div>NOME</div><div>CATEGORIA</div><div>FORNECEDOR</div><div>PREÇO</div><div>ESTOQUE</div><div>STATUS</div><div>AÇÕES</div>
       </div>
-      <!-- TODO (Etapa 4 - Produtos/Estoque): substituir por GET /api/produtos -->
       <div id="produtos-tbody"></div>
     </div>
   </div>
@@ -63,6 +62,12 @@
             </select>
           </label>
           <label class="field">
+            <span>Fornecedor</span>
+            <select name="fornecedor_id" id="select-fornecedor">
+              <option value="">Nenhum</option>
+            </select>
+          </label>
+          <label class="field">
             <span>Preço de venda</span>
             <input type="text" name="preco" placeholder="R$ 0,00">
           </label>
@@ -83,6 +88,7 @@
     </div>
   </div>
 </div>
+
 <script src="js/partials.js"></script>
 <script>
   let PRODUCTS = [];
@@ -95,6 +101,18 @@
     const resp = await fetch('/api/produtos');
     PRODUCTS = await resp.json();
     renderProdutos();
+  }
+
+  async function carregarFornecedoresSelect() {
+    const resp = await fetch('/api/fornecedores');
+    const fornecedores = await resp.json();
+    const select = document.getElementById('select-fornecedor');
+    fornecedores.filter(f => f.ativo).forEach(f => {
+      const option = document.createElement('option');
+      option.value = f.id;
+      option.textContent = f.nome_fantasia;
+      select.appendChild(option);
+    });
   }
 
   function renderProdutos() {
@@ -122,7 +140,7 @@
           <div><span class="pill ${baixo ? 'pill-danger' : 'pill-success'}">${p.estoque} un.</span></div>
           <div><span class="pill pill-sm ${p.ativo ? 'pill-success' : 'pill-neutral'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></div>
           <div class="table-actions">
-            ${p.ativo ? `<button data-inativar="${p.id}">Inativar</button>` : ''}
+            ${p.ativo ? `<button data-inativar="${p.id}">Inativar</button>` : `<button data-reativar="${p.id}">Reativar</button>`}
           </div>
         </div>
       `;
@@ -131,10 +149,18 @@
     tbody.querySelectorAll('[data-inativar]').forEach(btn => {
       btn.addEventListener('click', () => inativarProduto(btn.dataset.inativar));
     });
+    tbody.querySelectorAll('[data-reativar]').forEach(btn => {
+      btn.addEventListener('click', () => reativarProduto(btn.dataset.reativar));
+    });
   }
 
   async function inativarProduto(id) {
     await fetch(`/api/produtos/${id}/inativar`, { method: 'PATCH' });
+    carregarProdutos();
+  }
+
+  async function reativarProduto(id) {
+    await fetch(`/api/produtos/${id}/reativar`, { method: 'PATCH' });
     carregarProdutos();
   }
 
@@ -159,6 +185,7 @@
         sku: dados.get('sku'),
         nome: dados.get('nome'),
         categoria: dados.get('categoria'),
+        fornecedor_id: dados.get('fornecedor_id') || null,
         preco,
         estoque: parseInt(dados.get('estoque')) || 0,
         estoque_minimo: parseInt(dados.get('estoqueMinimo')) || 0,
@@ -177,7 +204,7 @@
   });
 
   carregarProdutos();
+  carregarFornecedoresSelect();
 </script>
-
 </body>
 </html>
